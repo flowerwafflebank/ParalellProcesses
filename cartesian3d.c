@@ -2,6 +2,8 @@
 #include <mpi.h>
 #include <time.h>
 #include <math.h>
+#include <string.h>
+#include <stdlib.h>
 
 int main(int argc, char *argv[]){
 
@@ -9,19 +11,53 @@ int main(int argc, char *argv[]){
 	int num_proc, my_rank, cart_rank;
 	MPI_Comm comm3D;
 	int namber=3;
-	int dims[namber],coord[namber];
+	int coord[namber];
 	int bc[namber];
 	int reorder, nrows,ncols;
 	int p,rank_source[number_dims],rank_dest[number_dims];
+	int check, dims[namber];
+	dims[0],dims[1],dims[2]=0;
+   /* if(strcmp(arg, "-particles") == 0){
+      if(++i < argc){
+        long long n_particles = atoll(argv[i]);
+        if(n_particles < 1)
+          print_error("Number of particles must be greater than 0");
+        parameters->n_particles = n_particles;
+      }
+      else print_error("Error reading command line input '-particles'");
+    }*/
 
 	MPI_Init(&argc, &argv);
 	
 	MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-	
+	for(int j=1; j<argc; j++){
+		if(strcmp(argv[j], "x")==0){
+			dims[0]=atoi(argv[j+1]);
+		}
+		if(strcmp(argv[j], "y")==0){
+			dims[1]=atoi(argv[j+1]);
+		}
+		if(strcmp(argv[j],"z")==0){
+			dims[2]=atoi(argv[j+1]);
+		}
+	}
+//	printf("%d,%d,%d,check:%d,%s,%s,%s,\n",dims[0],dims[1],dims[2],check,argv[1],argv[2],argv[3]);
+	check=dims[0]*dims[1]*dims[2];
+	if(num_proc!=check&&my_rank==0){
+		printf("dimensions don't match the number of processes\n");
+		MPI_Abort(MPI_COMM_WORLD,0);
+	}
+
+
+	clock_t start=clock();
+	while(clock() < start+3000)
+		;
+
+
 	nrows=ncols=3;
 	for(int i=0; i<3;i++){
-		dims[i]=2;
+//		dims[i]=2;
 		bc[i]=1;
 	}
 
