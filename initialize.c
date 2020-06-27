@@ -24,7 +24,9 @@ Parameters *init_parameters(void)
   p->write_keff = FALSE;
   p->tally_file = NULL;
   p->keff_file = NULL;
-
+  p->dims[0]=1;
+  p->dims[1]=1;
+  p->dims[2]=1;
   return p;
 }
 
@@ -204,3 +206,22 @@ void free_tally(Tally *tally)
 
   return;
 }
+
+MPI_DOUBLE doobie;
+//this is me trying to declare an MPI_datatype not sure bout it
+
+MPI_Aint holder;
+//holding the mem address
+
+MPI_Cart_rank(comm3D, coord, &cart_rank);
+
+MPI_Cart_shift(comm3D, 0,1,&rank_source[0], &rank_dest[0]);
+//int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int *rank_source, int *rank_dest)    one needed for each dimension
+MPI_Cart_shift(comm3D, 1,1, &rank_source[1], &rank_dest[1]);
+MPI_Cart_shift(comm3D, 2,1, &rank_source[2], &rank_dest[2]);
+/*
+MPI_Type_get_extent // gets and lower bound and extent of a datatype, which is basically what the sizeof() operator returns
+MPI_Type_struct // once you have the types and count of the members within your new MPI datatype, pass them to this function to define the MPI datatype's structure
+MPI_Type_commit // commit the new datatype to the MPI runtime
+MPI_Cart_shift // call this three times, once per dimension, to store the neighbors in each direction
+*/

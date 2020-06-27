@@ -146,6 +146,9 @@ void parse_parameters(Parameters *parameters)
       strcpy(parameters->keff_file, s);
     }
 
+  //decomposition of dimensions
+    else if(strmpc(s, "num_proc_x") == 0){
+      s = strtok(NULL, "=\n"
     // Unknown config file option
     else print_error("Unknown option in config file.");
   }
@@ -483,3 +486,12 @@ void write_keff(double *keff, int n, char *filename)
   return;
 }
 
+MPI_Status status; //for MPI_Recv
+MPI_Cart_rank(comm3D, coord, &cart_rank);
+//should give cartesian rank
+
+
+/*
+MPI_Recv // get data from specified source rank. This function is synchronous, meaning the receiving thread doesn't continue until the message is received.
+MPI_Send // send data to specified rank. This function is synchronous, meaning it doesn't return until the memory that the data is sent from can be modified without modifying the data itself.
+*/

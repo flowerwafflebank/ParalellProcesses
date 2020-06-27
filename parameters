@@ -61,3 +61,12 @@ tally_file=tally.dat
 
 # keff_file: path to keff output
 keff_file=keff.dat
+
+#number of processes in x dimension
+num_proc_x=1
+
+#number of processes in y dimension
+num_proc_y=1
+
+#number of processes in z dimension
+num_proc_z=1

@@ -12,9 +12,11 @@ HEADERS = \
 header.h
 
 SOURCE = \
+mpi.c\
 main.c \
 initialize.c \
 prng.c \
+disperse.c\
 utils.c \
 io.c \
 transport.c \
@@ -38,7 +40,8 @@ ifeq ($(OPTIMIZE),yes)
 endif
 
 ifeq ($(COMPILER),gnu)
-  CC = gcc
+  CC = mpicc
+#now compiles with mpicc so compiler understands MPI
 endif
 
 # Targets to build

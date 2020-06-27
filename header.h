@@ -64,6 +64,10 @@ typedef struct Parameters_{
   int write_keff; // whether to output keff
   char *tally_file; // path to write tallies to
   char *keff_file; // path to write keff to
+
+  MPI_Comm my_comm; //declaring a communicator group
+  MPI_Datatype my_mpi_data; //declaring an mpi datatype
+
 } Parameters;
 
 typedef struct Particle_{
