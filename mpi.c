@@ -2,22 +2,22 @@
 //put the MPI_Comm_cart here.
 //probably copy and paste from cart3d
 
-	int number_dims=3;
 	int num_proc, my_rank, cart_rank;
 //	MPI_Comm comm3D; i think i put this in the header
-	int namber=3;
 	int coord[namber];
 	int bc[namber];
 	int reorder, nrows,ncols;
 	int p,rank_source[number_dims],rank_dest[number_dims];
 	int check, dims[namber];
-	dims[0]=num_proc_x;
-	dims[1]=num_proc_y;
-	dims[2]=num_proc_z;//refer to params file i think
+	//refer to params file i think
 	//automatically set all to 1
 
 	MPI_Init(&argc, &argv);
-	
+	int number_dims=3;
+	int namber=3;
+	dims[0]=num_proc_x;
+	dims[1]=num_proc_y;
+	dims[2]=num_proc_z;	
 	MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	for(int j=1; j<argc; j++){

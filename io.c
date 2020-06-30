@@ -146,9 +146,22 @@ void parse_parameters(Parameters *parameters)
       strcpy(parameters->keff_file, s);
     }
 
-  //decomposition of dimensions
-    else if(strmpc(s, "num_proc_x") == 0){
-      s = strtok(NULL, "=\n"
+    // Number of procs in each dimension
+    else if(strcmp(s, "num_proc_x") == 0){
+      parameters->num_proc[0] = atoi(strtok(NULL, "=\n"));
+    }
+
+    // Number of procs in each dimension
+    else if(strcmp(s, "num_proc_y") == 0){
+      parameters->num_proc[1] = atoi(strtok(NULL, "=\n"));
+    }
+
+    // Number of procs in each dimension
+    else if(strcmp(s, "num_proc_z") == 0){
+      parameters->num_proc[2] = atoi(strtok(NULL, "=\n"));
+    }
+
+
     // Unknown config file option
     else print_error("Unknown option in config file.");
   }
@@ -449,23 +462,43 @@ void init_output(Parameters *parameters)
   return;
 }
 
-void write_tally(Tally *t, char *filename)
+void write_tally(Tally *t, Parameters *p)
 {
-  int i, j, k;
-  FILE *fp;
-
-  fp = fopen(filename, "a");
-
-  for(i=0; i<t->n; i++){
-    for(j=0; j<t->n; j++){
-      for(k=0; k<t->n; k++){
-        fprintf(fp, "%e ", t->flux[i + t->n*j + t->n*t->n*k]);
-      }
-      fprintf(fp, "\n");
+  int i, j, k, coords[3], temp, rank;
+MPI_Status status; //for MPI_Recv
+if(p->rank==0){
+	
+  FILE *fp=fopen(p->tally_file, "a");
+//buffer for tallies from other processors
+double *y=malloc(t->nz*sizeof(y));
+for(i=0; i<p->n_bins; i++){
+	coords[0]=i/t->nx;
+	for(j=0; j<p->n_bins; j++){
+		coords[1]=j/t->ny;
+		for(k=0; k<p->n_bins; k++){
+			coords[2]=k/t->nz;
+			MPI_Cart_rank(p->my_comm,coords, &rank);
+			temp = t->nz*(j%t->ny)+t->nz*t->ny*(i%t->nx);
+			if(rank==0)
+				memcpy(y, &t->flux[temp], t->nz*sizeof(double));
+			else
+				MPI_Recv(y, t->nz, MPI_DOUBLE, rank, temp, p->my_comm, &status);
+			for(int l=0; l<t->nz;l++)
+				fprintf(fp, "%e ", y[l]);
+		}
+		fprintf(fp, "\n");
+	}
+}
+fclose(fp);
+} else
+		
+  for(i=0; i<t->nx; i++){
+    for(j=0; j<t->ny; j++){
+			temp=t->nz*j+t->nz*t->ny*i;
+			MPI_Send(&t->flux[temp], t->nz, MPI_DOUBLE, 0, temp, p->my_comm);	
     }
   }
 
-  fclose(fp);
 
   return;
 }
@@ -486,9 +519,6 @@ void write_keff(double *keff, int n, char *filename)
   return;
 }
 
-MPI_Status status; //for MPI_Recv
-MPI_Cart_rank(comm3D, coord, &cart_rank);
-//should give cartesian rank
 
 
 /*

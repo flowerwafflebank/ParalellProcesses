@@ -64,14 +64,19 @@ typedef struct Parameters_{
   int write_keff; // whether to output keff
   char *tally_file; // path to write tallies to
   char *keff_file; // path to write keff to
-
+  int num_proc[3];//number of processors in each dimension 
   MPI_Comm my_comm; //declaring a communicator group
   MPI_Datatype my_mpi_data; //declaring an mpi datatype
-
+  int rank,size;// this will be the rank and size of our MPI communicator
+	int coords[3]; //holds the ranks' cartesian coordinates
+	int dead;
 } Parameters;
 
 typedef struct Particle_{
   int alive;
+  int surface_crossed;
+	int hit;
+	int coord[3];
   double mu; // cosine of polar angle
   double phi; // azimuthal angle
   double u; // direction
@@ -80,7 +85,9 @@ typedef struct Particle_{
   double x; // position
   double y;
   double z;
-  int surface_crossed;
+	double lx;
+	double ly;
+	double lz;
 } Particle;
 
 typedef struct Geometry_{
@@ -88,6 +95,10 @@ typedef struct Geometry_{
   double x;
   double y;
   double z;
+	double xl;
+	double yl;
+	double zl;
+	int my_naybor[6];
 } Geometry;
 
 typedef struct Nuclide_{
@@ -109,7 +120,9 @@ typedef struct Material_{
 
 typedef struct Tally_{
   int tallies_on; // whether tallying is currently turned on
-  int n; // mumber of grid boxes in each dimension 
+  int nx; // mumber of grid boxes in each dimension 
+	int ny;
+	int nz;
   double dx; // grid spacing
   double dy;
   double dz;
@@ -119,6 +132,7 @@ typedef struct Tally_{
 typedef struct Bank_{
   unsigned long n; // number of particles
   unsigned long sz; // size of bank
+	unsigned long dead;
   Particle *p; // particle array
   void (*resize)(struct Bank_ *b);
 } Bank;
@@ -133,7 +147,7 @@ void fancy_int(long a);
 void center_print(const char *s, int width);
 void print_status(int i_a, int i_b, double keff_batch, double keff_mean, double keff_std);
 void init_output(Parameters *parameters);
-void write_tally(Tally *t, char *filename);
+void write_tally(Tally *t, Parameters *p);
 void write_keff(double *keff, int n, char *filename);
 
 // utils.c funtion prototypes
@@ -170,7 +184,7 @@ void collision(Material *material, Bank *fission_bank, double nu, Particle *p);
 
 // eigenvalue.c function prototypes
 void run_eigenvalue(Parameters *parameters, Geometry *geometry, Material *material, Bank *source_bank, Bank *fission_bank, Tally *tally, double *keff);
-void synchronize_bank(Bank *source_bank, Bank *fission_bank);
+unsigned long synchronize_bank(Bank *source_bank, Bank *fission_bank, Parameters *parameters);
 void calculate_keff(double *keff, double *mean, double *std, int n);
 
 // tally.c function prototypes

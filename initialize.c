@@ -24,9 +24,18 @@ Parameters *init_parameters(void)
   p->write_keff = FALSE;
   p->tally_file = NULL;
   p->keff_file = NULL;
-  p->dims[0]=1;
-  p->dims[1]=1;
-  p->dims[2]=1;
+	p->dead=0;
+	MPI_Datatype atom, base[2]={MPI_INT, MPI_DOUBLE};
+	int blocks[2]={6,11};
+	MPI_Aint offset[2],lb,extent;
+	MPI_Type_get_extent(MPI_INT, &lb, &extent);
+	offset[0]=lb; //how many bytes into the particle structure do the integers
+	offset[1]=blocks[0]*extent+lb;//how many bytes in do the doubles begin
+	MPI_Type_create_struct(2,blocks,offset, base, &atom);
+	MPI_Type_commit(&atom);
+	p->my_mpi_data=atom;
+  MPI_Comm_size(MPI_COMM_WORLD, &p->size);
+	MPI_Dims_create(p->size, 3,p->num_proc);
   return p;
 }
 
@@ -35,8 +44,13 @@ Geometry *init_geometry(Parameters *parameters)
   Geometry *g = malloc(sizeof(Geometry));
 
   g->x = parameters->gx;
+  g->xl=g->x/parameters->num_proc[0];
   g->y = parameters->gy;
+	g->yl=g->y/parameters->num_proc[1];
   g->z = parameters->gz;
+	g->zl=g->z/parameters->num_proc[2];
+	for(int j=0; j<3;j++)
+		MPI_Cart_shift(parameters->my_comm,j,1, &g->my_naybor[2*j], &g->my_naybor[2*j+1]); 
   g->bc = parameters->bc;
 
   return g;
@@ -47,11 +61,13 @@ Tally *init_tally(Parameters *parameters)
   Tally *t = malloc(sizeof(Tally));
 
   t->tallies_on = FALSE;
-  t->n = parameters->n_bins;
-  t->dx = parameters->gx/t->n;
-  t->dy = parameters->gy/t->n;
-  t->dz = parameters->gz/t->n;
-  t->flux = calloc(t->n*t->n*t->n, sizeof(double));
+  t->nx = parameters->n_bins/parameters->num_proc[0];
+  t->ny = parameters->n_bins/parameters->num_proc[1];
+  t->nz = parameters->n_bins/parameters->num_proc[2];
+  t->dx = parameters->gx/parameters->n_bins;
+  t->dy = parameters->gy/parameters->n_bins;
+  t->dz = parameters->gz/parameters->n_bins;
+  t->flux = calloc(t->nx*t->ny*t->nz, sizeof(double));
 
   return t;
 }
@@ -109,10 +125,13 @@ Bank *init_source_bank(Parameters *parameters, Geometry *geometry)
   Bank *source_bank;
 
   // Initialize source bank
-  source_bank = init_bank(parameters->n_particles);
+	if(parameters->rank==0)
+ 	 source_bank = init_bank(parameters->n_particles);
+	else
+ 	 source_bank = init_bank(parameters->n_particles/parameters->size);
 
   // Sample source particles
-  for(i_p=0; i_p<parameters->n_particles; i_p++){
+  for(i_p=0; i_p<parameters->n_particles/parameters->size; i_p++){
     sample_source_particle(geometry, &(source_bank->p[i_p]));
     source_bank->n++;
   }
@@ -123,8 +142,10 @@ Bank *init_source_bank(Parameters *parameters, Geometry *geometry)
 Bank *init_fission_bank(Parameters *parameters)
 {
   Bank *fission_bank;
-  fission_bank = init_bank(2*parameters->n_particles);
-
+ if(parameters->rank==0)
+	 fission_bank = init_bank(2*parameters->n_particles);
+ else
+	 fission_bank = init_bank(2*parameters->n_particles/parameters->size);
   return fission_bank;
 }
 
@@ -150,7 +171,13 @@ void sample_source_particle(Geometry *geometry, Particle *p)
   p->x = rn()*geometry->x;
   p->y = rn()*geometry->y;
   p->z = rn()*geometry->z;
-
+  p->hit=FALSE;
+	p->coord[0]=p->x/geometry->xl;
+	p->coord[1]=p->y/geometry->yl;
+	p->coord[2]=p->z/geometry->zl;
+	p->lx=p->x-p->coord[0]*geometry->xl;
+	p->ly=p->y-p->coord[1]*geometry->yl;
+	p->lz=p->z-p->coord[2]*geometry->zl;
   return;
 }
 
@@ -165,6 +192,7 @@ void sample_fission_particle(Particle *p, Particle *p_old)
   p->x = p_old->x;
   p->y = p_old->y;
   p->z = p_old->z;
+	p->hit=FALSE;
 
   return;
 }
@@ -206,7 +234,7 @@ void free_tally(Tally *tally)
 
   return;
 }
-
+/*
 MPI_DOUBLE doobie;
 //this is me trying to declare an MPI_datatype not sure bout it
 
@@ -219,7 +247,7 @@ MPI_Cart_shift(comm3D, 0,1,&rank_source[0], &rank_dest[0]);
 //int MPI_Cart_shift(MPI_Comm comm, int direction, int disp, int *rank_source, int *rank_dest)    one needed for each dimension
 MPI_Cart_shift(comm3D, 1,1, &rank_source[1], &rank_dest[1]);
 MPI_Cart_shift(comm3D, 2,1, &rank_source[2], &rank_dest[2]);
-/*
+
 MPI_Type_get_extent // gets and lower bound and extent of a datatype, which is basically what the sizeof() operator returns
 MPI_Type_struct // once you have the types and count of the members within your new MPI datatype, pass them to this function to define the MPI datatype's structure
 MPI_Type_commit // commit the new datatype to the MPI runtime
