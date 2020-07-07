@@ -50,5 +50,3 @@
 	MPI_Barrier(comm3D); //so they all have same time
 	MPI_Wtime(); //gets the time
 
-//i dont think we want to run this yet?? because we still need to use mpi; ask for clarification about what ordder the links run in
-//	 MPI_Finalize():
