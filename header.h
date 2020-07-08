@@ -191,4 +191,6 @@ void calculate_keff(double *keff, double *mean, double *std, int n);
 void score_tally(Parameters *parameters, Material *material, Tally *tally, Particle *p);
 void reset_tally(Tally *tally);
 
+// disperse.c function protoypes
+void disperse(Parameters *parameters, Geometry *geometry, Bank *source_bank);
 #endif

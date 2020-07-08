@@ -22,7 +22,7 @@ void transport(Parameters *parameters, Geometry *geometry, Material *material, B
     p->x = p->x + d*p->u;
     p->y = p->y + d*p->v;
     p->z = p->z + d*p->w;
-
+//update the particles coordinate and the particles local x,y,z (same lines in init.c)
     // Case where particle crosses boundary
     if(d_b < d_c){
       cross_surface(geometry, p);
@@ -30,12 +30,9 @@ void transport(Parameters *parameters, Geometry *geometry, Material *material, B
     // Case where particle has collision
     else{
       collision(material, fission_bank, parameters->nu, p);
-
-      // Score tallies
-      if(tally->tallies_on == TRUE){
-        score_tally(parameters, material, tally, p);
-      }
     }
+		if(p->alive==FALSE)
+			source_bank->dead++;
   }
   return;
 }
@@ -93,12 +90,14 @@ void cross_surface(Geometry *geometry, Particle *p)
   if(geometry->bc == VACUUM){
     p->alive = FALSE;
   }
-
+//update particle lx,y,z and coord appropriately
   // Handle reflective boundary conditions
   else if(geometry->bc == REFLECT){
     if(p->surface_crossed == X0){
       p->u = -p->u;
       p->x = 0.0;
+			p->coord[0]=0;
+			p->lx=0.0;
     }
     else if(p->surface_crossed == X1){
       p->u = -p->u;
@@ -126,6 +125,8 @@ void cross_surface(Geometry *geometry, Particle *p)
   else if(geometry->bc == PERIODIC){
     if(p->surface_crossed == X0){
       p->x = geometry->x;
+			p->lx=geometry->xl; ///update below accordingly
+			p->coord[0]=params->num_proc[0]-1;
     }
     else if(p->surface_crossed == X1){
       p->x = 0;
@@ -204,6 +205,6 @@ void collision(Material *material, Bank *fission_bank, double nu, Particle *p)
     p->v = sqrt(1 - p->mu*p->mu) * cos(p->phi);
     p->w = sqrt(1 - p->mu*p->mu) * sin(p->phi);
   }
-
+	p->hit=TRUE;
   return;
 }

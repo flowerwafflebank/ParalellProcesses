@@ -15,7 +15,6 @@ SOURCE = \
 main.c\
 initialize.c \
 prng.c \
-utils.c \
 io.c \
 transport.c \
 tally.c \
