@@ -179,7 +179,7 @@ void free_tally(Tally *tally);
 void transport(Parameters *parameters, Geometry *geometry, Material *material, Bank *source_bank, Bank *fission_bank, Tally *tally, Particle *p);
 double distance_to_boundary(Geometry *geometry, Particle *p);
 double distance_to_collision(Material *material);
-void cross_surface(Geometry *geometry, Particle *p);
+void cross_surface(Geometry *geometry, Particle *p, Parameters *parameters);
 void collision(Material *material, Bank *fission_bank, double nu, Particle *p);
 
 // eigenvalue.c function prototypes

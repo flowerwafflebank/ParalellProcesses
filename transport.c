@@ -22,10 +22,13 @@ void transport(Parameters *parameters, Geometry *geometry, Material *material, B
     p->x = p->x + d*p->u;
     p->y = p->y + d*p->v;
     p->z = p->z + d*p->w;
+		p->lx= p->lx + d*p->u;
+		p->ly= p->ly + d*p->v;
+		p->lz= p->lz + d*p->w;
 //update the particles coordinate and the particles local x,y,z (same lines in init.c)
     // Case where particle crosses boundary
     if(d_b < d_c){
-      cross_surface(geometry, p);
+      cross_surface(geometry, p, parameters);
     }
     // Case where particle has collision
     else{
@@ -84,7 +87,7 @@ double distance_to_collision(Material *material)
 }
 
 // Handles a particle crossing a surface in the geometry
-void cross_surface(Geometry *geometry, Particle *p)
+void cross_surface(Geometry *geometry, Particle *p, Parameters *parameters)
 {
   // Handle vacuum boundary conditions (particle leaks out)
   if(geometry->bc == VACUUM){
@@ -102,22 +105,32 @@ void cross_surface(Geometry *geometry, Particle *p)
     else if(p->surface_crossed == X1){
       p->u = -p->u;
       p->x = geometry->x;
+			p->coord[0]=geometry->x;//not positive on this one
+			p->lx=geometry->x;
     }
     else if(p->surface_crossed == Y0){
       p->v = -p->v;
       p->y = 0.0;
+			p->coord[1]=0;
+			p->ly = 0.0; 
     }
     else if(p->surface_crossed == Y1){
       p->v = -p->v;
       p->y = geometry->y;
+			p->coord[1]=geometry->y;
+			p->ly=geometry->y;
     }
     else if(p->surface_crossed == Z0){
       p->w = -p->w;
       p->z = 0.0;
+			p->coord[2]=0;
+			p->lz=0.0;
     }
     else if(p->surface_crossed == Z1){
       p->w = -p->w;
       p->z = geometry->z;
+			p->coord[2]=geometry->z;
+			p->lz=geometry->z;
     }
   }
   
@@ -126,22 +139,32 @@ void cross_surface(Geometry *geometry, Particle *p)
     if(p->surface_crossed == X0){
       p->x = geometry->x;
 			p->lx=geometry->xl; ///update below accordingly
-			p->coord[0]=params->num_proc[0]-1;
+			p->coord[0]=parameters->num_proc[0]-1;
     }
     else if(p->surface_crossed == X1){
       p->x = 0;
+			p->lx=geometry->xl;
+			p->coord[0]=parameters->num_proc[0]+1; //+1 cuz we are going in the other direction
     }
     else if(p->surface_crossed == Y0){
       p->y = geometry->y;
+			p->ly=geometry->yl;
+			p->coord[1]=parameters->num_proc[1]-1;
     }
     else if(p->surface_crossed == Y1){
       p->y = 0;
+			p->ly=geometry->yl;
+			p->coord[1]=parameters->num_proc[1]+1;
     }
     else if(p->surface_crossed == Z0){
       p->z = geometry->z;
+			p->lz=geometry->zl;
+			p->coord[2]=parameters->num_proc[2]-1;
     }
     else if(p->surface_crossed == Z1){
       p->z = 0;
+			p->lz=geometry->zl;
+			p->coord[2]=parameters->num_proc[1]-1;
     }
   }
 
