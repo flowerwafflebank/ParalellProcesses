@@ -4,7 +4,7 @@ Parameters *init_parameters(void)
 {
   Parameters *p = malloc(sizeof(Parameters));
 
-  p->n_particles = 1000000;
+  p->n_particles = 10000;
   p->n_batches = 10;
   p->n_generations = 1;
   p->n_active = 10;
