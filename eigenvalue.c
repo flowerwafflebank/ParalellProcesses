@@ -65,7 +65,7 @@ void run_eigenvalue(Parameters *parameters, Geometry *geometry, Material *materi
       // fission bank during this generation
 			i_p= synchronize_bank(source_bank, fission_bank, parameters);
       // Calculate generation k_effective and accumulate batch k_effective
-      keff_gen = (double) fission_bank->n / source_bank->n;
+      keff_gen = (double) i_p/parameters->n_particles;
       keff_batch += keff_gen;
     }
 
